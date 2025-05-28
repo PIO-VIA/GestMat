@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-
 /**
  * Classe utilitaire pour initialiser la base de données
  */
@@ -17,7 +16,7 @@ public class DatabaseInitializer {
     public static void initialize() {
         try {
             // Vérifier si le fichier de la base de données existe
-            File dbFile = new File("client_chat.db");
+            File dbFile = new File("GESTBD.db");
             boolean isNew = !dbFile.exists();
 
             // Obtenir une connexion (cela créera la BD si elle n'existe pas)
@@ -47,8 +46,8 @@ public class DatabaseInitializer {
      */
     private static void verifyTables(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
-            // Vérifier les tables users, messages et files
-            String[] tables = {"Salle", "VideoProjecteur", "Responsable","Reservation","Ordinateur","Enseignant"};
+            // Vérifier les tables
+            String[] tables = {"Salle", "VideoProjecteur", "Responsable", "Reservation", "Ordinateur", "Enseignant"};
 
             for (String table : tables) {
                 try {
@@ -71,44 +70,68 @@ public class DatabaseInitializer {
             // Table pour stocker les salles
             stmt.execute(
                     "CREATE TABLE IF NOT EXISTS Salle (" +
-                            "CodeSalle INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                            "username TEXT NOT NULL UNIQUE, " +
+                            "CodeSalle TEXT PRIMARY KEY, " +
+                            "nomSalle TEXT NOT NULL, " +
                             "capacite INTEGER NOT NULL, " +
-                            "status BOOLEAN NOT NULL DEFAULT 1" +
+                            "disponible BOOLEAN NOT NULL DEFAULT 1" +
                             ")"
             );
 
-            // Table pour stocker les messages
+            // Table pour stocker les Video Projecteur
             stmt.execute(
                     "CREATE TABLE IF NOT EXISTS VideoProjecteur (" +
-                            "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                            "sender TEXT NOT NULL, " +
-                            "receiver TEXT NOT NULL, " +
-                            "content TEXT NOT NULL, " +
-                            "timestamp TEXT DEFAULT CURRENT_TIMESTAMP, " +
-                            "read BOOLEAN NOT NULL DEFAULT 0" +
+                            "CodeMaterielV INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            "marque TEXT NOT NULL, " +
+                            "resolution TEXT NOT NULL, " +
+                            "disponible BOOLEAN NOT NULL DEFAULT 1" +
                             ")"
             );
 
-            // Table pour stocker les fichiers
+            // Table pour stocker les responsables
             stmt.execute(
-                    "CREATE TABLE IF NOT EXISTS files (" +
-                            "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                            "sender TEXT NOT NULL, " +
-                            "receiver TEXT NOT NULL, " +
-                            "filename TEXT NOT NULL, " +
-                            "filepath TEXT, " +
-                            "timestamp TEXT DEFAULT CURRENT_TIMESTAMP, " +
-                            "read BOOLEAN NOT NULL DEFAULT 0" +
+                    "CREATE TABLE IF NOT EXISTS Responsable (" +
+                            "idResponsable INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            "nom TEXT NOT NULL, " +
+                            "prenom TEXT NOT NULL, " +
+                            "password TEXT NOT NULL" +
                             ")"
             );
 
-            // Créer des index pour optimiser les recherches
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)");
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender)");
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver)");
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_files_sender ON files(sender)");
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_files_receiver ON files(receiver)");
+            // Table pour stocker les enseignants
+            stmt.execute(
+                    "CREATE TABLE IF NOT EXISTS Enseignant (" +
+                            "idEnseignant INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            "nom TEXT NOT NULL, " +
+                            "prenom TEXT NOT NULL" +
+                            ")"
+            );
+
+            // Table pour stocker les ordinateurs
+            stmt.execute(
+                    "CREATE TABLE IF NOT EXISTS Ordinateur (" +
+                            "codeMaterielO INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            "marque TEXT NOT NULL, " +
+                            "capacite INTEGER, " +
+                            "ecran TEXT, " +
+                            "disponible BOOLEAN NOT NULL DEFAULT 1" +
+                            ")"
+            );
+
+            // Table pour stocker les réservations
+            stmt.execute(
+                    "CREATE TABLE IF NOT EXISTS Reservation (" +
+                            "idReservation TEXT PRIMARY KEY, " +
+                            "idEnseignant INTEGER NOT NULL, " +
+                            "CodeMateriel INTEGER, " +
+                            "CodeSalle TEXT NOT NULL, " +
+                            "dateReservation DATE NOT NULL, " +
+                            "dateFinReservation DATE NOT NULL, " +
+                            "FOREIGN KEY (idEnseignant) REFERENCES Enseignant(idEnseignant), " +
+                            "FOREIGN KEY (CodeMateriel) REFERENCES VideoProjecteur(CodeMaterielV) ON DELETE SET NULL, " +
+                            "FOREIGN KEY (CodeMateriel) REFERENCES Ordinateur(codeMaterielO) ON DELETE SET NULL, " +
+                            "FOREIGN KEY (CodeSalle) REFERENCES Salle(CodeSalle)" +
+                            ")"
+            );
 
             System.out.println("Tables et index créés avec succès");
         } catch (SQLException e) {
