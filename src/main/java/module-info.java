@@ -5,6 +5,6 @@ module org.personnal.gestmat {
     requires javafx.graphics;
 
 
-    opens org.personnal.gestmat to javafx.fxml;
-    exports org.personnal.gestmat;
+    //opens org.personnal.gestmat to javafx.fxml;
+    exports org.personnal.gestmat.ui;
 }

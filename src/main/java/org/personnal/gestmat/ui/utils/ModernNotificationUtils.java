@@ -88,6 +88,7 @@ public class ModernNotificationUtils {
     /**
      * Créer une alerte avec style moderne
      */
+    @SuppressWarnings("incomplete-switch")
     private static Alert createStyledAlert(Alert.AlertType type, String title, String message, String icon) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -101,18 +102,10 @@ public class ModernNotificationUtils {
         
         // Ajouter la classe CSS selon le type
         switch (type) {
-            case INFORMATION:
-                dialogPane.getStyleClass().add("information");
-                break;
-            case ERROR:
-                dialogPane.getStyleClass().add("error");
-                break;
-            case WARNING:
-                dialogPane.getStyleClass().add("warning");
-                break;
-            case CONFIRMATION:
-                dialogPane.getStyleClass().add("confirmation");
-                break;
+            case INFORMATION -> dialogPane.getStyleClass().add("information");
+            case ERROR -> dialogPane.getStyleClass().add("error");
+            case WARNING -> dialogPane.getStyleClass().add("warning");
+            case CONFIRMATION -> dialogPane.getStyleClass().add("confirmation");
         }
         
         // Animation d'apparition
