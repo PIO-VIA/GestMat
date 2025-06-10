@@ -13,13 +13,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ComboBox;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 /**
@@ -54,7 +56,7 @@ public class HomeUI extends Application implements
 
     // Contrôles de planning
     private Node planningControls;
-    private Label planningContentLabel;
+    private VBox planningContent;
 
     // Bouton actuellement sélectionné
     private Button selectedButton;
@@ -110,12 +112,11 @@ public class HomeUI extends Application implements
      */
     private void createSidebar() {
         sidebar = new VBox();
-        sidebar.getStyleClass().addAll("sidebar", "sidebar-scroll");
-        sidebar.setPadding(new Insets(16, 8, 16, 8));
-        sidebar.setSpacing(8);
-        sidebar.setPrefWidth(260);
-        sidebar.setMinWidth(260);
-        sidebar.setMaxWidth(260);
+        sidebar.getStyleClass().addAll("sidebar");
+        sidebar.setSpacing(0); // Pas d'espacement global
+        sidebar.setPrefWidth(250);
+        sidebar.setMinWidth(250);
+        sidebar.setMaxWidth(250);
 
         // Initialiser les composants
         initializeSidebarComponents();
@@ -139,26 +140,34 @@ public class HomeUI extends Application implements
         roleLabel.setMaxWidth(Double.MAX_VALUE);
         roleLabel.setAlignment(Pos.CENTER);
 
-        // Boutons de navigation
-        btnPlanning = createNavButton("", "Planning", () -> controller.changeView(ViewType.PLANNING));
-        btnReservationSalle = createNavButton("", "Réserver Salle", () -> controller.changeView(ViewType.RESERVATION_SALLE));
-        btnReservationMateriel = createNavButton("", "Réserver Matériel", () -> controller.changeView(ViewType.RESERVATION_MATERIEL));
-        btnRecapHoraire = createNavButton("", "Récap Horaire", () -> controller.changeView(ViewType.RECAP_HORAIRE));
-        btnGestionEnseignants = createNavButton("", "Gestion Enseignants", () -> controller.changeView(ViewType.GESTION_ENSEIGNANTS));
+        // Logo/icône en haut
+        Label logoIcon = new Label("🏢");
+        logoIcon.getStyleClass().add("logo-icon");
+        logoIcon.setStyle("-fx-font-size: 30px; -fx-text-fill: white;");
+        logoIcon.setAlignment(Pos.CENTER);
+        logoIcon.setMaxWidth(Double.MAX_VALUE);
+
+        // Boutons de navigation - SANS ICÔNES comme dans l'image
+        btnPlanning = createNavButton("PLANNING", () -> controller.changeView(ViewType.PLANNING));
+        btnReservationSalle = createNavButton("RÉSERVER SALLE", () -> controller.changeView(ViewType.RESERVATION_SALLE));
+        btnReservationMateriel = createNavButton("RÉSERVER MATÉRIEL", () -> controller.changeView(ViewType.RESERVATION_MATERIEL));
+        btnRecapHoraire = createNavButton("RÉCAP HORAIRE", () -> controller.changeView(ViewType.RECAP_HORAIRE));
+        btnGestionEnseignants = createNavButton("GESTION ENSEIGNANTS", () -> controller.changeView(ViewType.GESTION_ENSEIGNANTS));
 
         // Boutons d'authentification
-        btnConnexion = createAuthButton("🔐 Se connecter", this::showLoginForm);
-        btnDeconnexion = createNavButton("🚪", "Se déconnecter", this::logout);
+        btnConnexion = createAuthButton("SE CONNECTER", this::showLoginForm);
+        btnDeconnexion = createAuthButton("SE DÉCONNECTER", this::logout);
 
         // Définir le bouton Planning comme sélectionné par défaut
         setSelectedButton(btnPlanning);
     }
 
+
     /**
      * Crée un bouton de navigation
      */
-    private Button createNavButton(String icon, String text, Runnable action) {
-        Button button = new Button(icon + " " + text);
+    private Button createNavButton(String text, Runnable action) {
+        Button button = new Button(text);
         button.getStyleClass().add("nav-button");
         button.setMaxWidth(Double.MAX_VALUE);
         button.setAlignment(Pos.CENTER_LEFT);
@@ -204,17 +213,34 @@ public class HomeUI extends Application implements
     private void updateSidebar() {
         sidebar.getChildren().clear();
 
-        // Spacer pour pousser le bouton de déconnexion vers le bas
+        // Logo section en haut
+        VBox logoSection = new VBox();
+        logoSection.getStyleClass().add("logo-section");
+        logoSection.setAlignment(Pos.CENTER);
+
+        Label logoIcon = new Label("🏢");
+        logoIcon.getStyleClass().add("logo-icon");
+        logoIcon.setStyle("-fx-font-size: 30px; -fx-text-fill: white;");
+        logoIcon.setAlignment(Pos.CENTER);
+        logoIcon.setMaxWidth(60);
+        logoIcon.setMaxHeight(60);
+        logoIcon.setMinWidth(60);
+        logoIcon.setMinHeight(60);
+
+        logoSection.getChildren().add(logoIcon);
+
+        // Spacer pour pousser le bouton de connexion vers le bas
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
         if (controller.isLoggedIn()) {
             // Utilisateur connecté
             var user = controller.getCurrentUser();
-            userLabel.setText("👤 " + user.getFullName());
+            userLabel.setText(user.getFullName());
             roleLabel.setText(user.getRole().toString());
 
             sidebar.getChildren().addAll(
+                    logoSection,
                     userLabel,
                     roleLabel,
                     createSeparator(),
@@ -229,26 +255,12 @@ public class HomeUI extends Application implements
                 sidebar.getChildren().add(btnGestionEnseignants);
             }
 
-            sidebar.getChildren().addAll(
-                    spacer,
-                    createSeparator(),
-                    btnDeconnexion
-            );
+            sidebar.getChildren().addAll(spacer, btnDeconnexion);
 
         } else {
             // Utilisateur non connecté
-            Label welcomeLabel = new Label("Bienvenue !");
-            welcomeLabel.getStyleClass().addAll("section-title", "text-center");
-
-            Label instructionLabel = new Label("Consultez le planning librement ou connectez-vous pour plus de fonctionnalités");
-            instructionLabel.getStyleClass().addAll("section-description", "text-center");
-            instructionLabel.setWrapText(true);
-            instructionLabel.setMaxWidth(220);
-            instructionLabel.setAlignment(Pos.CENTER);
-
             sidebar.getChildren().addAll(
-                    welcomeLabel,
-                    instructionLabel,
+                    logoSection,
                     createSeparator(),
                     btnPlanning,
                     spacer,
@@ -264,8 +276,8 @@ public class HomeUI extends Application implements
     private void createContentArea() {
         contentArea = new VBox();
         contentArea.getStyleClass().add("content-area");
-        contentArea.setSpacing(24);
-        contentArea.setPadding(new Insets(24));
+        contentArea.setSpacing(32);
+        contentArea.setPadding(new Insets(32));
 
         // ScrollPane pour le contenu
         contentScrollPane = new ScrollPane(contentArea);
@@ -284,11 +296,9 @@ public class HomeUI extends Application implements
         separator.getStyleClass().add("separator");
         separator.setPrefHeight(1);
         separator.setMaxHeight(1);
-        separator.setStyle("-fx-background-color: -fx-gray-200;");
+        separator.setStyle("-fx-background-color: var(--outline);");
         return separator;
     }
-
-    // ===== GESTION DES VUES =====
 
     /**
      * Affiche le tableau de bord
@@ -300,7 +310,7 @@ public class HomeUI extends Application implements
             // Ajouter les statistiques pour les utilisateurs connectés
             HBox statsContainer = createStatsContainer();
 
-            VBox content = new VBox(20);
+            VBox content = new VBox(24);
             content.getChildren().addAll(dashboard, statsContainer);
 
             setContentArea(content);
@@ -310,41 +320,100 @@ public class HomeUI extends Application implements
     }
 
     /**
-     * Affiche la vue planning avec contrôles
+     * Affiche la vue planning avec contrôles et cartes modernes
      */
     private void showPlanningView() {
-        // Créer la carte principale du planning
-        VBox planningCard = ModernUtils.createCard("📅 Planning des Salles", controller.getConsultationContent());
+        VBox mainContainer = new VBox(20);
+        mainContainer.setAlignment(Pos.TOP_CENTER);
+
+        // Créer la carte d'en-tête du planning
+        VBox planningHeader = ModernUtils.createCard("📅 Planning des Salles", controller.getConsultationContent());
 
         // Créer les contrôles de planning (ComboBox)
         planningControls = controller.createPlanningControls(this::updatePlanningContent);
 
-        // Créer le label pour afficher le contenu du planning
-        planningContentLabel = new Label("Sélectionnez une salle et une semaine pour voir le planning détaillé.");
-        planningContentLabel.getStyleClass().add("section-description");
-        planningContentLabel.setWrapText(true);
-        planningContentLabel.setPadding(new Insets(16));
-        planningContentLabel.setStyle("-fx-background-color: -fx-gray-50; -fx-background-radius: 8;");
+        // Initialiser le conteneur de planning
+        planningContent = new VBox();
+        updatePlanningContent(); // Mise à jour initiale
 
         // Assembler la vue
-        VBox planningView = new VBox(16);
-        planningView.getChildren().addAll(planningCard, planningControls, planningContentLabel);
+        mainContainer.getChildren().addAll(planningHeader, planningControls, planningContent);
 
-        setContentArea(planningView);
-
-        // Mise à jour initiale du contenu
-        updatePlanningContent();
+        setContentArea(mainContainer);
     }
 
     /**
-     * Met à jour le contenu du planning selon les sélections
+     * Crée les contrôles de planning avec ComboBoxes côte à côte
+     */
+    private Node createPlanningControls(Runnable updateCallback) {
+        HBox controls = new HBox(30);
+        controls.getStyleClass().add("planning-controls");
+        controls.setAlignment(Pos.CENTER_LEFT);
+        controls.setPadding(new Insets(20));
+
+        // Section Salle
+        HBox salleSection = new HBox(10);
+        salleSection.setAlignment(Pos.CENTER_LEFT);
+
+        Label salleLabel = new Label("Salle:");
+        salleLabel.getStyleClass().add("combo-label");
+
+        ComboBox<HomeUIController.Salle> salleComboBox = new ComboBox<>();
+        salleComboBox.getStyleClass().add("combo-box-modern");
+        salleComboBox.setPromptText("Sélectionner une salle");
+        salleComboBox.getItems().addAll(controller.getSalles());
+        salleComboBox.setPrefWidth(250);
+
+        salleSection.getChildren().addAll(salleLabel, salleComboBox);
+
+        // Section Semaine
+        HBox semaineSection = new HBox(10);
+        semaineSection.setAlignment(Pos.CENTER_LEFT);
+
+        Label semaineLabel = new Label("Semaine");
+        semaineLabel.getStyleClass().add("combo-label");
+
+        ComboBox<HomeUIController.Semaine> semaineComboBox = new ComboBox<>();
+        semaineComboBox.getStyleClass().add("combo-box-modern");
+        semaineComboBox.setPromptText("Sélectionner une semaine");
+        semaineComboBox.getItems().addAll(controller.getSemaines());
+        semaineComboBox.setPrefWidth(250);
+
+        // Définir la semaine actuelle par défaut
+        if (!controller.getSemaines().isEmpty()) {
+            semaineComboBox.setValue(controller.getSemaines().get(0));
+        }
+
+        semaineSection.getChildren().addAll(semaineLabel, semaineComboBox);
+
+        // Ajouter des listeners pour mettre à jour le contenu
+        salleComboBox.setOnAction(e -> updateCallback.run());
+        semaineComboBox.setOnAction(e -> updateCallback.run());
+
+        // Stocker les références pour pouvoir les récupérer
+        controls.getProperties().put("salleCombo", salleComboBox);
+        controls.getProperties().put("semaineCombo", semaineComboBox);
+
+        controls.getChildren().addAll(salleSection, semaineSection);
+
+        return controls;
+    }
+
+
+    /**
+     * Met à jour le contenu du planning avec les nouvelles cartes
      */
     private void updatePlanningContent() {
-        if (planningControls != null && planningContentLabel != null) {
+        if (planningControls != null && planningContent != null) {
             var salle = controller.getSelectedSalle(planningControls);
             var semaine = controller.getSelectedSemaine(planningControls);
-            String content = controller.getPlanningContent(salle, semaine);
-            planningContentLabel.setText(content);
+
+            // Créer les nouvelles cartes de planning
+            VBox newPlanningCards = controller.createPlanningCards(salle, semaine);
+
+            // Remplacer le contenu
+            planningContent.getChildren().clear();
+            planningContent.getChildren().addAll(newPlanningCards.getChildren());
         }
     }
 
@@ -430,8 +499,9 @@ public class HomeUI extends Application implements
      * Crée le conteneur de statistiques
      */
     private HBox createStatsContainer() {
-        HBox statsContainer = new HBox(16);
+        HBox statsContainer = new HBox(24);
         statsContainer.getStyleClass().add("stats-container");
+        statsContainer.setAlignment(Pos.CENTER);
 
         // Statistiques différentes selon le rôle
         var user = controller.getCurrentUser();
@@ -455,7 +525,7 @@ public class HomeUI extends Application implements
      * Crée une statistique rapide
      */
     private VBox createQuickStat(String icon, String value, String label) {
-        VBox stat = new VBox(8);
+        VBox stat = new VBox(16);
         stat.getStyleClass().add("quick-stats");
         stat.setAlignment(Pos.CENTER);
 
@@ -482,21 +552,19 @@ public class HomeUI extends Application implements
         contentArea.getChildren().add(content);
     }
 
-    // ===== AUTHENTIFICATION =====
-
     /**
      * Affiche le formulaire de connexion
      */
     private void showLoginForm() {
-        VBox loginForm = new VBox(20);
+        VBox loginForm = new VBox(24);
         loginForm.setAlignment(Pos.CENTER);
-        loginForm.setPadding(new Insets(40));
+        loginForm.setPadding(new Insets(48));
         loginForm.getStyleClass().add("stat-card");
-        loginForm.setMaxWidth(450);
+        loginForm.setMaxWidth(480);
 
         Label titleLabel = new Label("🔐 Connexion");
         titleLabel.getStyleClass().addAll("section-title", "text-center");
-        titleLabel.setStyle("-fx-font-size: 24px;");
+        titleLabel.setStyle("-fx-font-size: 28px;");
 
         Label subtitleLabel = new Label("Accédez à votre espace personnel");
         subtitleLabel.getStyleClass().addAll("section-description", "text-center");
@@ -505,12 +573,12 @@ public class HomeUI extends Application implements
         TextField usernameField = new TextField();
         usernameField.setPromptText("Nom d'utilisateur");
         usernameField.getStyleClass().add("text-field");
-        usernameField.setMaxWidth(300);
+        usernameField.setMaxWidth(320);
 
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Mot de passe");
         passwordField.getStyleClass().add("text-field");
-        passwordField.setMaxWidth(300);
+        passwordField.setMaxWidth(320);
 
         // Zone d'aide
         Label helpLabel = new Label("💡 Comptes de test :\n" +
@@ -518,8 +586,8 @@ public class HomeUI extends Application implements
                 "• enseignant / pass (Enseignant)\n" +
                 "• admin / admin (Responsable)");
         helpLabel.getStyleClass().addAll("text-muted", "text-center");
-        helpLabel.setStyle("-fx-font-size: 12px; -fx-background-color: -fx-gray-50; " +
-                "-fx-padding: 12; -fx-background-radius: 6;");
+        helpLabel.setStyle("-fx-font-size: 12px; -fx-background-color: var(--surface-variant); " +
+                "-fx-padding: 16px; -fx-background-radius: 8px;");
 
         // Boutons
         Button loginButton = new Button("Se connecter");
@@ -528,7 +596,7 @@ public class HomeUI extends Application implements
         Button cancelButton = new Button("Annuler");
         cancelButton.getStyleClass().add("secondary-button");
 
-        HBox buttonBox = new HBox(12);
+        HBox buttonBox = new HBox(16);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.getChildren().addAll(loginButton, cancelButton);
 
@@ -567,18 +635,34 @@ public class HomeUI extends Application implements
         }
     }
 
-    // ===== GESTION DES STYLES =====
-
     /**
-     * Configure les styles CSS
+     * Configure les styles CSS et charge la police Poppins
      */
     private void setupStyles(Scene scene) {
         ModernUtils.initUI(scene);
 
-        // Charger le CSS avec gestion d'erreur
-        boolean cssLoaded = ModernUtils.loadCSS(scene, "/org/personnal/gestmat/ui/styles/modernStyle.css");
+        // Charger CSS
+        boolean cssLoaded = ModernUtils.loadCSS(scene, "/org/personnal/gestmat/styles/modernStyle.css");
         if (!cssLoaded) {
-            System.out.println("📝 Application fonctionnelle avec styles de base");
+            System.out.println("📝 Échec du chargement de modernStyle.css, styles de base appliqués");
+        } else {
+            System.out.println("✅ CSS chargé : /org/personnal/gestmat/styles/modernStyle.css");
+        }
+
+        // Charger explicitement la police
+        Font loaded = Font.loadFont(getClass().getResource("/fonts/Poppins-SemiBold.ttf").toExternalForm(), 14);
+        if (loaded == null) {
+            System.out.println("⚠️ Échec du chargement de la police Poppins-Regular.ttf");
+        } else {
+            System.out.println("✅ Police chargée : " + loaded.getName());
+        }
+
+        // Test si utilisable
+        Font poppins = Font.font("Poppins", 14);
+        if (poppins.getFamily().equals("System")) {
+            System.out.println("⚠️ Police Poppins non trouvée, utilisation de la police système");
+        } else {
+            System.out.println("✅ Police Poppins appliquée");
         }
     }
 

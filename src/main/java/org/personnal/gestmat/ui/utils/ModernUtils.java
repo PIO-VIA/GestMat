@@ -25,7 +25,6 @@ public class ModernUtils {
     public static void initUI(Scene scene) {
         // Charger la police personnalisée (optionnel)
         loadCustomFont("Poppins-SemiBold.ttf", 14);
-        loadCustomFont("Roboto-Regular.ttf", 14);
 
         // Appliquer des styles de base si le CSS n'est pas disponible
         applyFallbackStyles(scene);

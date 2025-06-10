@@ -3,8 +3,13 @@ package org.personnal.gestmat.ui.controllers;
 import org.personnal.gestmat.ui.utils.ModernNotificationUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
@@ -133,6 +138,44 @@ public class HomeUIController {
                     debut.format(DateTimeFormatter.ofPattern("dd/MM")),
                     fin.format(DateTimeFormatter.ofPattern("dd/MM"))
             );
+        }
+    }
+
+    /**
+     * Modèle représentant un créneau horaire
+     */
+    public static class CreneauHoraire {
+        private final String heureDebut;
+        private final String heureFin;
+        private final boolean occupe;
+        private final String cours;
+        private final String professeur;
+
+        public CreneauHoraire(String heureDebut, String heureFin, boolean occupe, String cours, String professeur) {
+            this.heureDebut = heureDebut;
+            this.heureFin = heureFin;
+            this.occupe = occupe;
+            this.cours = cours;
+            this.professeur = professeur;
+        }
+
+        public String getHeureDebut() { return heureDebut; }
+        public String getHeureFin() { return heureFin; }
+        public boolean isOccupe() { return occupe; }
+        public String getCours() { return cours; }
+        public String getProfesseur() { return professeur; }
+
+        public String getHoraire() { return heureDebut + "\n" + heureFin; }
+
+        public String getStatutTexte() {
+            return occupe ? "⚫ Cours réservé" : "⚪ Disponible";
+        }
+
+        public String getDetailsTexte() {
+            if (occupe && cours != null && professeur != null) {
+                return cours + " - " + professeur;
+            }
+            return "Aucune réservation";
         }
     }
 
@@ -319,7 +362,144 @@ public class HomeUIController {
     // ===== MÉTHODES DE PLANIFICATION =====
 
     /**
-     * Génère le contenu du planning pour une salle et une semaine
+     * Génère les données de planning pour une salle et une semaine
+     */
+    private List<CreneauHoraire> generatePlanningData(Salle salle, Semaine semaine) {
+        List<CreneauHoraire> creneaux = new ArrayList<>();
+
+        // Créneaux horaires standards
+        String[][] horaires = {
+                {"08:00", "10:00"},
+                {"10:15", "12:15"},
+                {"13:30", "15:30"},
+                {"15:45", "17:45"}
+        };
+
+        String[] cours = {"Mathématiques", "Physique", "Informatique", "Chimie", "Biologie", "Histoire"};
+        String[] professeurs = {"Prof. Martin", "Dr. Dubois", "Prof. Bernard", "Dr. Durand", "Prof. Leclerc", "Prof. Rousseau"};
+
+        for (String[] horaire : horaires) {
+            // Simuler aléatoirement des créneaux occupés
+            boolean occupe = Math.random() > 0.5;
+            String coursName = null;
+            String prof = null;
+
+            if (occupe) {
+                coursName = cours[(int)(Math.random() * cours.length)];
+                prof = professeurs[(int)(Math.random() * professeurs.length)];
+            }
+
+            creneaux.add(new CreneauHoraire(horaire[0], horaire[1], occupe, coursName, prof));
+        }
+
+        return creneaux;
+    }
+
+    /**
+     * Crée les cartes de planning avec horaires verticaux
+     */
+    /**
+     * Crée les cartes de planning avec horaires verticaux - VERSION CORRIGÉE
+     */
+    public VBox createPlanningCards(Salle salle, Semaine semaine) {
+        if (salle == null || semaine == null) {
+            Label messageLabel = new Label("Sélectionnez une salle et une semaine pour voir le planning détaillé.");
+            messageLabel.getStyleClass().add("section-description");
+            messageLabel.setWrapText(true);
+            messageLabel.setPadding(new Insets(16));
+            messageLabel.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 20;");
+
+            VBox container = new VBox();
+            container.getChildren().add(messageLabel);
+            return container;
+        }
+
+        VBox planningContainer = new VBox(20);
+        planningContainer.getStyleClass().add("planning-container");
+
+        // Générer tous les jours de la semaine (lundi à vendredi)
+        String[] nomsJours = {"LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI"};
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMMM", Locale.FRENCH);
+
+        // Parcourir tous les jours de la semaine
+        for (int i = 0; i < nomsJours.length; i++) {
+            VBox daySection = new VBox(15);
+            daySection.getStyleClass().add("planning-day-section");
+
+            // Calculer la vraie date pour ce jour
+            LocalDate dateJour = semaine.getDebut().plusDays(i);
+            String jourFormate = nomsJours[i] + " " + dateJour.format(dateFormatter).toUpperCase();
+
+            // Titre du jour
+            Label dayTitle = new Label(jourFormate);
+            dayTitle.getStyleClass().add("planning-day-title");
+            daySection.getChildren().add(dayTitle);
+
+            // Générer les créneaux pour ce jour
+            List<CreneauHoraire> creneaux = generatePlanningData(salle, semaine);
+
+            for (CreneauHoraire creneau : creneaux) {
+                HBox timeRow = new HBox(15);
+                timeRow.getStyleClass().add("planning-time-row");
+                timeRow.setAlignment(Pos.CENTER_LEFT);
+
+                // Label horaire (colonne fixe)
+                VBox timeBox = new VBox(2);
+                timeBox.setAlignment(Pos.CENTER);
+                timeBox.setMinWidth(80);
+                timeBox.setMaxWidth(80);
+
+                Label startTime = new Label(creneau.getHeureDebut());
+                Label endTime = new Label(creneau.getHeureFin());
+                startTime.getStyleClass().add("planning-time-label");
+                endTime.getStyleClass().add("planning-time-label");
+
+                // Séparateur entre les heures
+                Label separator = new Label("|");
+                separator.getStyleClass().add("planning-time-label");
+                separator.setStyle("-fx-font-size: 10px; -fx-text-fill: #999999;");
+
+                timeBox.getChildren().addAll(startTime, separator, endTime);
+
+                // Carte du créneau
+                VBox timeSlot = new VBox(5);
+                timeSlot.getStyleClass().add("planning-time-slot");
+
+                // Appliquer la couleur selon l'état
+                if (creneau.isOccupe()) {
+                    timeSlot.getStyleClass().add("planning-time-slot-occupied"); // Bleu
+                } else {
+                    timeSlot.getStyleClass().add("planning-time-slot-free"); // Vert
+                }
+
+                // Contenu du créneau
+                Label statusLabel = new Label(creneau.isOccupe() ? "⚫ Cours réservé" : "⚪ Disponible");
+                statusLabel.getStyleClass().add("planning-status-label");
+                if (creneau.isOccupe()) {
+                    statusLabel.getStyleClass().add("planning-status-occupied");
+                } else {
+                    statusLabel.getStyleClass().add("planning-status-free");
+                }
+
+                Label courseLabel = new Label(creneau.getDetailsTexte());
+                courseLabel.getStyleClass().add("planning-course-label");
+
+                timeSlot.getChildren().addAll(statusLabel, courseLabel);
+
+                // Permettre à la carte de prendre tout l'espace disponible
+                HBox.setHgrow(timeSlot, Priority.ALWAYS);
+
+                timeRow.getChildren().addAll(timeBox, timeSlot);
+                daySection.getChildren().add(timeRow);
+            }
+
+            planningContainer.getChildren().add(daySection);
+        }
+
+        return planningContainer;
+    }
+    /**
+     * Génère le contenu du planning pour une salle et une semaine (version texte - conservée pour compatibilité)
      */
     public String getPlanningContent(Salle salle, Semaine semaine) {
         if (salle == null || semaine == null) {
@@ -350,27 +530,36 @@ public class HomeUIController {
         return content.toString();
     }
 
-    // ===== MÉTHODES DE CRÉATION D'INTERFACE =====
-
     /**
      * Crée les contrôles de planning (ComboBox)
      */
     public Node createPlanningControls(Runnable onSelectionChange) {
-        VBox controls = new VBox();
+        HBox controls = new HBox(16);
         controls.getStyleClass().add("planning-controls");
-        controls.setSpacing(16);
+        controls.setAlignment(Pos.CENTER_LEFT);
+        controls.setPadding(new Insets(16));
+
+        // Label pour la salle
+        Label salleLabel = new Label("Salle :");
+        salleLabel.getStyleClass().add("combo-label");
 
         // ComboBox pour les salles
         ComboBox<Salle> salleCombo = new ComboBox<>(getSalles());
         salleCombo.setPromptText("Sélectionner une salle");
-        salleCombo.getStyleClass().add("combo-box");
+        salleCombo.getStyleClass().add("combo-box-modern");
         salleCombo.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(salleCombo, Priority.ALWAYS);
+
+        // Label pour la semaine
+        Label semaineLabel = new Label("Semaine :");
+        semaineLabel.getStyleClass().add("combo-label");
 
         // ComboBox pour les semaines
         ComboBox<Semaine> semaineCombo = new ComboBox<>(getSemaines());
         semaineCombo.setPromptText("Sélectionner une semaine");
-        semaineCombo.getStyleClass().add("combo-box");
+        semaineCombo.getStyleClass().add("combo-box-modern");
         semaineCombo.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(semaineCombo, Priority.ALWAYS);
 
         // Définir la semaine actuelle par défaut
         if (!semaines.isEmpty()) {
@@ -394,7 +583,7 @@ public class HomeUIController {
         controls.getProperties().put("salleCombo", salleCombo);
         controls.getProperties().put("semaineCombo", semaineCombo);
 
-        controls.getChildren().addAll(salleCombo, semaineCombo);
+        controls.getChildren().addAll(salleLabel, salleCombo, semaineLabel, semaineCombo);
 
         return controls;
     }
@@ -404,8 +593,8 @@ public class HomeUIController {
      */
     @SuppressWarnings("unchecked")
     public Salle getSelectedSalle(Node planningControls) {
-        if (planningControls instanceof VBox vbox) {
-            ComboBox<Salle> combo = (ComboBox<Salle>) vbox.getProperties().get("salleCombo");
+        if (planningControls instanceof HBox hbox) {
+            ComboBox<Salle> combo = (ComboBox<Salle>) hbox.getProperties().get("salleCombo");
             return combo != null ? combo.getValue() : null;
         }
         return null;
@@ -416,8 +605,8 @@ public class HomeUIController {
      */
     @SuppressWarnings("unchecked")
     public Semaine getSelectedSemaine(Node planningControls) {
-        if (planningControls instanceof VBox vbox) {
-            ComboBox<Semaine> combo = (ComboBox<Semaine>) vbox.getProperties().get("semaineCombo");
+        if (planningControls instanceof HBox hbox) {
+            ComboBox<Semaine> combo = (ComboBox<Semaine>) hbox.getProperties().get("semaineCombo");
             return combo != null ? combo.getValue() : null;
         }
         return null;
@@ -468,20 +657,20 @@ public class HomeUIController {
 
         if (currentUser != null) {
             content.append("Planning Général - ").append(currentUser.getRole().getDisplayName()).append("\n\n");
-            content.append("🔍 Fonctionnalités avancées :\n");
+            /*content.append("🔍 Fonctionnalités avancées :\n");
             content.append("• Filtrage par salle et semaine\n");
             content.append("• Export du planning\n");
-            content.append("• Notifications de disponibilité\n");
+            content.append("• Notifications de disponibilité\n");*/
             if (currentUser.isResponsable()) {
                 content.append("• Modification des réservations\n");
             }
         } else {
             content.append("Planning Général (Mode Public)\n\n");
-            content.append("👀 Consultation libre :\n");
+            /*content.append("👀 Consultation libre :\n");
             content.append("• Visualisation des créneaux occupés/libres\n");
             content.append("• Vérification de la disponibilité des salles\n");
             content.append("• Informations sur les capacités\n\n");
-            content.append("💡 Connectez-vous pour effectuer des réservations");
+            content.append("💡 Connectez-vous pour effectuer des réservations");*/
         }
 
         return content.toString();

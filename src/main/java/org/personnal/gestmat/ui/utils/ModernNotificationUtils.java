@@ -186,7 +186,7 @@ public class ModernNotificationUtils {
             
             Scene scene = new Scene(toastContainer);
             scene.setFill(null);
-            scene.getStylesheets().add(ModernNotificationUtils.class.getResource(STYLESHEET_PATH).toExternalForm());
+            scene.getStylesheets().add(ModernNotificationUtils.class.getResource("/org/personnal/gestmat/styles/modernStyle.css").toExternalForm());
             
             toastStage.setScene(scene);
             
